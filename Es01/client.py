@@ -97,22 +97,21 @@ if __name__ == '__main__':
   topic = "/tiot/26/catalog/"
   topicMessage = ""
 
-  while (True):
-    print("Available options: ")
-    print("0 - Insert subtopic")
-    print("1 - Insert device value")
-    print("2 - Exit")
-    input_val = int(input("Enter command number: "))
-    if input_val == 0:
-      subTopic = input("Insert device subtopic: ")
-      topicMessage = topic + subTopic
-      client.mySubscribe(f"{topicMessage}")
-      value = int(input("Insert device value: "))
-      client.mySecondPublish(topicMessage, value)
-    elif input_val == 1:
-      if (topicMessage == ""):
-        print("You have to insert the topic!")
-        pass
+  print("Available options: ")
+  print("0 - Insert subtopic")
+  print("1 - Insert device value")
+  print("2 - Exit")
+  input_val = int(input("Enter command number: "))
+  if input_val == 0:
+    subTopic = input("Insert device subtopic: ")
+    topicMessage = topic + subTopic
+    client.mySubscribe(f"{topicMessage}")
+    value = int(input("Insert device value: "))
+    client.mySecondPublish(topicMessage, value)
+  elif input_val == 1:
+    if (topicMessage == ""):
+      print("You have to insert the topic!")
+      pass
       else:
         value = int(input("Insert device value: "))
         client.mySecondPublish(topicMessage, value)
