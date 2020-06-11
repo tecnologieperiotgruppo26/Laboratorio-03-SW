@@ -1,6 +1,6 @@
 import paho.mqtt.client as PahoMQTT
 import time
-import threading
+import requests
 import json
 
 class MyMQTT(object):
@@ -84,38 +84,56 @@ class IoTPublisher():
 			# remember to unsuscribe if it is working also as subscriber
 		  self.myMqttClient._paho_mqtt.unsubscribe(self.myMqttClient._topic)
 
-
 ##
 # Main
 ##
 if __name__ == '__main__':
   counterThread = 0
   client = IoTPublisher("Lab3-1")
-  client.run()
-  topic = "/tiot/26/catalog/"
-  topicMessage = ""
+  server = "http://localhost:8080"
+  #client.run()
 
-	# Topic temperatura: tmp
+  # Register as a new service
+  payload = {'description': 'prova','rest':'','mqtt':''}
+  r = requests.post('http://localhost:8080/services/new', data=payload)
+  serviceID = int(r.text)
+  print(f"serviceID: {serviceID}")
 
-  print("Available options: ")
-  print("0 - Insert subtopic")
-  print("1 - Insert device value")
-  print("2 - Exit")
-  input_val = int(input("Enter command number: "))
-  if input_val == 0:
-    subTopic = input("Insert device subtopic: ")
-    topicMessage = topic + subTopic
-    client.mySubscribe(f"{topicMessage}")
-    value = int(input("Insert device value: "))
-    client.mySecondPublish(topicMessage, value)
-  elif input_val == 1:
-    if (topicMessage == ""):
-      print("You have to insert the topic!")
-      pass
-      else:
-        value = int(input("Insert device value: "))
-        client.mySecondPublish(topicMessage, value)
-    elif input_val == 2:
-      break
+  # Get message broker info from Catalog
+  r = requests.get(f"{server}/messagebroker")
+  mb = json.loads(r.text)
+  topic = mb.get('catalogTopic')
+  subtopic = ""
 
-  client.end()
+  # Get Yun endpoint
+  r = requests.get(f"{server}/devices")
+  mb = json.loads(r.text)
+  print(mb)
+
+  # Subscribe client to topic
+  client.mySubscribe(f"{topic}")
+
+
+
+  # print("Available options: ")
+  # print("0 - Insert subtopic")
+  # print("1 - Insert device value")
+  # print("2 - Exit")
+  # input_val = int(input("Enter command number: "))
+  # if input_val == 0:
+  #   subTopic = input("Insert device subtopic: ")
+  #   topicMessage = topic + subTopic
+  #   client.mySubscribe(f"{topicMessage}")
+  #   value = int(input("Insert device value: "))
+  #   client.mySecondPublish(topicMessage, value)
+  # elif input_val == 1:
+  #   if (topicMessage == ""):
+  #     print("You have to insert the topic!")
+  #     pass
+  #     else:
+  #       value = int(input("Insert device value: "))
+  #       client.mySecondPublish(topicMessage, value)
+  #   elif input_val == 2:
+  #     break
+
+  # client.end()
