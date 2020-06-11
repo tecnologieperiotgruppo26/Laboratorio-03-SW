@@ -115,7 +115,7 @@ if __name__ == '__main__':
       else:
         value = int(input("Insert device value: "))
         client.mySecondPublish(topicMessage, value)
-    elif input_val == 2:
-      break
+  elif input_val == 2:
+    break
 
   client.end()

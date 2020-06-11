@@ -106,13 +106,35 @@ if __name__ == '__main__':
   subtopic = ""
 
   # Get Yun endpoint
-  r = requests.get(f"{server}/devices")
-  devices = json.loads(r.text)
-  end_point = devices['devices'][0]['mqtt']
+  # r = requests.get(f"{server}/devices")
+  # devices = json.loads(r.text)
+  # end_point = devices['devices'][0]['mqtt']
 
-  topic = topic + end_point
+  # topic = topic + end_point
+  topic = topic + "led"
 
   # Subscribe client to topic
   client.mySubscribe(f"{topic}")
+
+  print("Available options: ")
+  print("0 - Insert subtopic")
+  print("1 - Insert device value")
+  print("2 - Exit")
+  input_val = int(input("Enter command number: "))
+  if input_val == 0:
+    subTopic = input("Insert device subtopic: ")
+    topicMessage = topic + subTopic
+    client.mySubscribe(f"{topicMessage}")
+    value = int(input("Insert device value: "))
+    client.mySecondPublish(topicMessage, value)
+  elif input_val == 1:
+    if (topicMessage == ""):
+      print("You have to insert the topic!")
+      pass
+      else:
+        value = int(input("Insert device value: "))
+        client.mySecondPublish(topicMessage, value)
+  elif input_val == 2:
+    break
 
   client.end()
