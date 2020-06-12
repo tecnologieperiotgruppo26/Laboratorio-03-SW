@@ -53,10 +53,10 @@ class MyMQTT(object):
 		self._paho_mqtt.publish(topic, message, 2)
 
 class IoTPublisher():
-	def __init__(self, clientID):
+	def __init__(self, clientID, broker, port):
 		# create an instance of MyMQTT class
 		self.clientID = clientID
-		self.myMqttClient = MyMQTT(self.clientID, "mqtt.eclipse.org", 1883, self)
+		self.myMqttClient = MyMQTT(self.clientID, broker, port, self)
 
 	def run(self):
 		# if needed, perform some other actions befor starting the mqtt communication
@@ -88,10 +88,7 @@ class IoTPublisher():
 # Main
 ##
 if __name__ == '__main__':
-  counterThread = 0
-  client = IoTPublisher("Lab3-1")
   server = "http://localhost:8080"
-  client.run()
 
   # Register as a new service
   payload = {'description': 'prova','rest':'','mqtt':''}
@@ -102,6 +99,8 @@ if __name__ == '__main__':
   # Get message broker info from Catalog
   r = requests.get(f"{server}/messagebroker")
   mb = json.loads(r.text)
+  broker = mb.get('url')
+  port = mb.get('port')
   topic = mb.get('catalogTopic')
   subtopic = ""
 
@@ -110,6 +109,9 @@ if __name__ == '__main__':
   devices = json.loads(r.text)
   end_point = devices['devices'][0]['mqtt']
 
+  client = IoTPublisher("Lab3-1", broker, port)
+  client.run()
+  
   topic = topic + end_point
 
   # Subscribe client to topic
