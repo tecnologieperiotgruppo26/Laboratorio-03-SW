@@ -16,11 +16,11 @@
 #include <math.h>
 #include <LiquidCrystal_PCF8574.h>
 
-const int capacity = JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(1) + JSON_OBJECT_SIZE(3) + 50;
+const int capacity = 128;
 DynamicJsonDocument doc_snd(capacity);
 DynamicJsonDocument doc_rec(capacity);
 
-float tempFanMinNoPeople = 25;
+float tempFanMinNoPeople = 22;
 float tempFanMaxNoPeople = 30;
 float tempLedMinNoPeople = 20;
 float tempLedMaxNoPeople = 25;
@@ -36,6 +36,7 @@ int tempLedMax = 0;
 
 float temp;
 
+const int lightPin = 12;
 const int ledPin = 11;
 const int tempPin = A1;
 const long int R0 = 100000;
@@ -77,16 +78,18 @@ int timeout = 60000;
  * parte per comunicazione mqtt
  */
 
-String myBaseTopicLed = "/tiot/26/catalog/led";
+String myBaseTopicLed = "/tiot/26/catalog/led";   //ledVerde
 String myBaseTopicTmp = "/tiot/26/catalog/tmp";
-String myBaseTopicFan = "/tiot/26/catalog/fan";
+String myBaseTopicFan = "/tiot/26/catalog/fan";   //anche riscaldamento
 String myBaseTopicPresence = "/tiot/26/catalog/presence";
 String myBaseTopicResponse = "/tiot/26/catalog/+/res";
+String myBaseTopicLedONOFF = "/tiot/26/catalog/led/setLedValue";
 
-String basenameTmp = "Yun";
-String basenameLed = "Yun";
-String basenameFan = "Yun";
-String basenamePresence = "Yun"; 
+
+String basenameTmp = "unregistered";
+String basenameLed = "unregistered";
+String basenameFan = "unregistered";
+String basenamePresence = "unregistered"; 
 
 void setup() {
   // put your setup code here, to run once:
@@ -94,24 +97,25 @@ void setup() {
   pinMode(fanPin, OUTPUT);
   pinMode(ledPin, OUTPUT);
   analogWrite(fanPin, currentSpeed);
+  pinMode(lightPin, OUTPUT);
 
   pinMode(soundPin, INPUT);
 
   pinMode(pirPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(soundPin), checkSound, FALLING);
+  //attachInterrupt(digitalPinToInterrupt(soundPin), checkSound, FALLING);
 
   setupSoundEvents(soundEvents);
 
-  lcd.begin(16, 2);
-  lcd.setBacklight(255);
-  lcd.home();
-  lcd.clear();
+//  lcd.begin(16, 2);
+//  lcd.setBacklight(255);
+//  lcd.home();
+//  lcd.clear();
   pinMode(13, OUTPUT);
   digitalWrite(13, LOW);
   Bridge.begin();
   digitalWrite(13, HIGH);
   mqtt.begin("mqtt.eclipse.org", 1883);
-  mqtt.subscribe(myBaseTopicResponse, setLedValue);
+  mqtt.subscribe(myBaseTopicLed, setLedValue);
   /**
    * setLedValue, ovvero il secondo argomento della funzione
    * subscribe serve ad associare una funzione al segnale di 
@@ -119,7 +123,7 @@ void setup() {
    * disponibili
    */
   Serial.begin(9600);
-  Serial.print("Lab 3.3 Starting:");
+  Serial.println("Lab 3.3 Starting:");
 }
 
 void loop() {
@@ -146,6 +150,7 @@ void loop() {
   }
   
    temp = checkTemp();
+   Serial.println(String(temp));
 
    /**
    * Controllo ventilatore
@@ -177,19 +182,19 @@ void loop() {
   /**
    * COMUNICAZIONE MQTT 
    */
-
-  String jsonTemp = senMlEncode("tmp", temp, "C", basenameTmp);
-  mqtt.publish(myBaseTopicTmp, jsonTemp);
+  Serial.print("sto prima della creazione json");
+  String json = senMlEncode("tmp", temp, "C", basenameTmp);
+  mqtt.publish(myBaseTopicTmp, json);
   Serial.print("published tmp on topic");
-  Serial.println(jsonTemp);
+  Serial.println(json);
   Serial.println(myBaseTopicTmp);
 
-  String jsonLed = senMlEncode("tmp", ledPower, "", basenameLed);
-  mqtt.publish(myBaseTopicLed, jsonTemp);
-  String jsonFan = senMlEncode("fan", currentSpeed, "", basenameFan);
-  mqtt.publish(myBaseTopicFan, jsonTemp);
-  String jsonPresence = senMlEncode("pres", flag, "", basenamePresence);
-  mqtt.publish(myBaseTopicPresence, jsonTemp);
+  json = senMlEncode("tmp", ledPower, "", basenameLed);
+  mqtt.publish(myBaseTopicLed, json);
+  json = senMlEncode("fan", currentSpeed, "", basenameFan);
+  mqtt.publish(myBaseTopicFan, json);
+  json = senMlEncode("pres", flag, "", basenamePresence);
+  mqtt.publish(myBaseTopicPresence, json);
   
   /**
    *  Questo current millis indica il tempo trasorso dall'ultimo movimento
@@ -208,7 +213,7 @@ void loop() {
    * il ciclo while dura 5 secondi, prima di ogni ciclo vado a cambiare la pagina
    * del LCD
    */
-  lookLCD();
+  //lookLCD();
  
   int delayMillis = int(millis()/1000);
   while (int(millis()/1000) - delayMillis <= sleepTime){
@@ -225,29 +230,10 @@ void loop() {
  * 
  */
 void setLedValue(const String& topic, const String& subtopic, const String& message){
-  DeserializationError err = deserializeJson(doc_rec, message);
-  if (err){
-    Serial.print(F("DeserializeJson() failed with code "));
-    Serial.println(err.c_str());
+  deserializeJson(doc_rec, message);
+      if(doc_rec["v"]==0 || doc_rec["v"]==1){
+        digitalWrite(ledPin, (int)doc_rec["v"]);  
   }
-  String topicCompleto = String(topic)+String(subtopic);
-  if (topicCompleto == myBaseTopicLed){
-    if (doc_rec["e"][0]["n"] == "led"){
-      if(doc_rec["e"][0]["v"]==0 || doc_rec["e"][0]["v"]==1){
-        digitalWrite(ledPin, (int)doc_rec["e"][0]["v"]);  
-      }
-      else{
-        Serial.println("Valore errato del led");
-      }
-    } 
-    else {
-      Serial.println("Errore nel json, mi aspetto un messaggio con n = led!"); 
-    }
-  }
-  else {
-    Serial.println("ti sei iscritto al topic sbagliato. riprogrammare la scheda");
-  }
-  
 }
 
 /**
@@ -281,18 +267,24 @@ String senMlEncode(String res, float v, String unit, String bn){
    *              ma preferisco mantenere leggibilità)
    *          unit = unità di misura del valore della risorsa
    */
+   Serial.println(res);
+   Serial.println(bn);
+  Serial.println(unit);
+  Serial.println("CIAO"); 
   doc_snd.clear();
   doc_snd["bn"] = bn;
-  doc_snd["e"][0]["n"] = res;
-  doc_snd["e"][0]["v"] = v;
-  if (unit != ""){
-    doc_snd["e"][0]["v"] = unit;
-  } else {
-    doc_snd["e"][0]["u"] = (char*)NULL;
-  }
+  doc_snd["c"] =  "0";
+  doc_snd["e"]["n"] = res;
+  doc_snd["e"]["v"] = v;
+  //if (unit != ""){
+  doc_snd["e"]["u"] = unit;
+  //} else {
+  //  doc_snd["e"]["u"] = (char*)NULL;
+  //}
   
   String output;
-  serializeJson(doc_snd, output);
+  Serial.println(serializeJson(doc_snd, output));
+  Serial.println(output);
   return output;
 }
 //
@@ -376,17 +368,8 @@ void lookLCD(){
     lcd.print(" HT:");
     lcd.print(String(ledPower/2.55));
     setupLCD = 1;
-
-    Serial.print("T=");
-    Serial.print(String(temp));
-    Serial.print(" Pres:");
-    Serial.print(String(flag));
-    Serial.println("");
-    Serial.print("AC:");
-    Serial.print(String(currentSpeed/2.55));
-    Serial.print(" HT:");
-    Serial.print(String(ledPower/2.55));
   }
+    
   else if(setupLCD == 1){
     lcd.clear();
     lcd.setCursor(0, 0);
@@ -400,17 +383,6 @@ void lookLCD(){
     lcd.print(" M:");
     lcd.print(String(tempLedMax));
     setupLCD = 0;
-
-
-    Serial.print("AC m:");
-    Serial.print(String(tempFanMin));
-    Serial.print(" M:");
-    Serial.print(String(tempFanMax));
-    Serial.println("");
-    Serial.print("HT m:");
-    Serial.print(String(tempLedMin));
-    Serial.print(" M:");
-    Serial.print(String(tempLedMax));
   }
 }
 
