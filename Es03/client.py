@@ -134,7 +134,7 @@ if __name__ == '__main__':
       print("Lights are OFF")
     elif led_value==1:
       print("Lights are ON")
-    else
+    else:
       print("Error in light system!")
       break
 
@@ -168,9 +168,9 @@ if __name__ == '__main__':
     if (topicMessage == ""):
       print("You have to insert the topic!")
       pass
-      else:
-        value = int(input("Insert device value: "))
-        client.mySecondPublish(topicMessage, value)
+    else:
+      value = int(input("Insert device value: "))
+      client.mySecondPublish(topicMessage, value)
   elif input_val == 2:
     break
 
