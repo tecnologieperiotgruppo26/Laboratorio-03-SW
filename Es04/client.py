@@ -145,6 +145,8 @@ if __name__ == '__main__':
     topicMessage = topic + subTopic
     client.mySubscribe(f"{topicMessage}")
     value = int(input("Insert light value (1 - ON, 2 - OFF): "))
+    if ((value<1) or (value >2)):
+      print("You have typed a wrong number!")
     client.mySecondPublish(topicMessage, value)
   else:
     print("You have typed a wrong number!")
