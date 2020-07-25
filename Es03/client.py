@@ -84,14 +84,19 @@ class IoTPublisher():
 			# remember to unsuscribe if it is working also as subscriber
 		  self.myMqttClient._paho_mqtt.unsubscribe(self.myMqttClient._topic)
 
+
+def setJSONCommand(self, value):
+  res = {
+    "c": 0,
+    "v": value
+  }
+  return res
+
 ##
 # Main
 ##
 if __name__ == '__main__':
-  counterThread = 0
-  client = IoTPublisher("Lab3-1")
   server = "http://localhost:8080"
-  client.run()
 
   # Register as a new service
   payload = {'description': 'prova','rest':'','mqtt':''}
@@ -102,19 +107,51 @@ if __name__ == '__main__':
   # Get message broker info from Catalog
   r = requests.get(f"{server}/messagebroker")
   mb = json.loads(r.text)
+  broker = mb.get('url')
+  port = mb.get('port')
   topic = mb.get('catalogTopic')
   subtopic = ""
 
   # Get Yun endpoint
-  # r = requests.get(f"{server}/devices")
-  # devices = json.loads(r.text)
-  # end_point = devices['devices'][0]['mqtt']
+  r = requests.get(f"{server}/devices")
+  devices = json.loads(r.text)
+  end_point = devices['devices'][0]['mqtt']
 
+  client = IoTPublisher("Lab3-1", broker, port)
+  client.run()
+  
   # topic = topic + end_point
   topic = topic + "led"
 
+  # Get led status
+  led_value = devices['devices'][0]['resources'][0]['v']
+
   # Subscribe client to topic
   client.mySubscribe(f"{topic}")
+
+  while True:
+    if led_value==0:
+      print("Lights are OFF")
+    elif led_value==1:
+      print("Lights are ON")
+    else
+      print("Error in light system!")
+      break
+
+    print("Available options: ")
+    if led_value==0:
+      print("1 - Turn lights ON")
+    elif led_value==1:
+      print("2 - Turn lights OFF")
+    print("0 - Exit")
+    input_val = int(input("Enter command number: "))
+
+    if input_val == 1:
+      client.mySecondPublish(topicMessage, setJSONCommand(input_val))
+    elif input_val == 2:
+      client.mySecondPublish(topicMessage, setJSONCommand(input_val))
+    elif input_val == 0:
+      break
 
   print("Available options: ")
   print("0 - Insert subtopic")
