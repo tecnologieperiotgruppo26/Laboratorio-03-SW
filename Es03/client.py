@@ -115,6 +115,7 @@ if __name__ == '__main__':
   # Get Yun endpoint
   r = requests.get(f"{server}/devices")
   devices = json.loads(r.text)
+  # Si considera solo l'unico dispositivo registrato
   end_point = devices['devices'][0]['mqtt']
 
   client = IoTPublisher("Lab3-1", broker, port)
