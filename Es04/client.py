@@ -132,46 +132,21 @@ if __name__ == '__main__':
 
   print("Available options: ")
   print("0 - Change temperature")
-  print("1 - Insert device value")
+  print("1 - Turn ON/OFF light")
   input_val = int(input("Enter command number: "))
   if input_val == 0:
     subTopic = input("Insert device subtopic: ")
     topicMessage = topic + subTopic
     client.mySubscribe(f"{topicMessage}")
-    value = int(input("Insert temperature value: "))
+    value = float(input("Insert temperature value: "))
     client.mySecondPublish(topicMessage, value)
   elif input_val == 1:
-    if (topicMessage == ""):
-      print("You have to insert the topic!")
-      pass
-    else:
-      value = int(input("Insert device value: "))
-      client.mySecondPublish(topicMessage, value)
+    subTopic = input("Insert device subtopic: ")
+    topicMessage = topic + subTopic
+    client.mySubscribe(f"{topicMessage}")
+    value = int(input("Insert light value (1 - ON, 2 - OFF): "))
+    client.mySecondPublish(topicMessage, value)
   else:
     print("You have typed a wrong number!")
-
-  while True:
-    if led_value==0:
-      print("Lights are OFF")
-    elif led_value==1:
-      print("Lights are ON")
-    else:
-      print("Error in light system!")
-      break
-
-    print("Available options: ")
-    if led_value==0:
-      print("1 - Turn lights ON")
-    elif led_value==1:
-      print("2 - Turn lights OFF")
-    print("0 - Exit")
-    input_val = int(input("Enter command number: "))
-
-    if input_val == 1:
-      client.mySecondPublish(topic, setJSONCommand(input_val))
-    elif input_val == 2:
-      client.mySecondPublish(topic, setJSONCommand(input_val))
-    elif input_val == 0:
-      break
 
   client.end()
