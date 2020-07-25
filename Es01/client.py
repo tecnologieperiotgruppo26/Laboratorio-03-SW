@@ -100,7 +100,6 @@ if __name__ == '__main__':
   print("Available options: ")
   print("0 - Insert subtopic")
   print("1 - Insert device value")
-  print("2 - Exit")
   input_val = int(input("Enter command number: "))
   if input_val == 0:
     subTopic = input("Insert device subtopic: ")
@@ -112,10 +111,10 @@ if __name__ == '__main__':
     if (topicMessage == ""):
       print("You have to insert the topic!")
       pass
-      else:
-        value = int(input("Insert device value: "))
-        client.mySecondPublish(topicMessage, value)
-  elif input_val == 2:
-    break
+    else:
+      value = int(input("Insert device value: "))
+      client.mySecondPublish(topicMessage, value)
+  else:
+    print("You have typed a wrong number!")
 
   client.end()
